@@ -1,6 +1,13 @@
 from setuptools import setup
 import codecs
 
+try:
+    from Cython.Build import cythonize
+except ImportError:
+    ext_modules = []
+else:
+    ext_modules = cythonize('openrtb/base.py')
+
 
 def readme(fn):
     with codecs.open(fn, encoding='utf-8') as f:
@@ -12,6 +19,7 @@ setup(name='openrtb',
       packages=[
           'openrtb',
       ],
+      ext_modules=ext_modules,
       author='Pavel Anossov',
       author_email='anossov@gmail.com',
       classifiers=[

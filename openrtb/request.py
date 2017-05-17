@@ -867,7 +867,7 @@ class Impression(Object):
     tagid = Field(String)
 
     #: Minimum bid for this impression expressed in CPM.
-    bidfloor = Field(Decimal)
+    bidfloor = Field(lambda x: Decimal(str(x)))
 
     #: Currency specified using ISO-4217 alpha codes. This may be different
     #: from bid currency returned by bidder if this is allowed by the exchange.

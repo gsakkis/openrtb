@@ -35,7 +35,7 @@ class Bid(Object):
     #: unit impression only. Note that while the type indicates float, integer
     #: math is highly recommended when handling currencies (e.g., BigDecimal in
     #: Java).
-    price = Field(Decimal, required=True)
+    price = Field(lambda x: Decimal(str(x)), required=True)
 
     #: ID of a preloaded ad to be served if the bid wins.
     adid = Field(String)

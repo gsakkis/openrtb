@@ -1,6 +1,3 @@
-import six
-
-
 class ValidationError(Exception):
     pass
 
@@ -27,18 +24,18 @@ class Field(object):
 
 
 def String(value, encoding='utf-8', errors='ignore'):
-    if isinstance(value, six.text_type):
+    if isinstance(value, str):
         return value
-    if isinstance(value, six.binary_type):
+    if isinstance(value, bytes):
         return value.decode(encoding=encoding, errors=errors)
-    return six.text_type(value)
+    return str(value)
 
 
 def serialize(value):
     if hasattr(value, 'serialize'):
         return value.serialize()
     if isinstance(value, list):
-        return list(six.moves.map(serialize, value))
+        return list(map(serialize, value))
     return value
 
 
@@ -46,15 +43,14 @@ class ObjectMeta(type):
 
     def __init__(cls, name, bases, attrs):
         super(ObjectMeta, cls).__init__(name, bases, attrs)
-        named_fields = [item for item in six.iteritems(attrs)
+        named_fields = [item for item in attrs.items()
                         if isinstance(item[1], Field)]
         cls._deserializers = {name: field.deserialize for name, field in named_fields}
         cls._defaults = {name: field.default for name, field in named_fields}
         cls._required = {name for name, field in named_fields if field.required}
 
 
-@six.add_metaclass(ObjectMeta)
-class Object(object):
+class Object(object, metaclass=ObjectMeta):
 
     def __init__(self, **kwargs):
         if not self._required.issubset(kwargs):
@@ -70,7 +66,7 @@ class Object(object):
     def deserialize(cls, raw_data):
         data = {}
         get_deserializer = cls._deserializers.get
-        for k, v in six.iteritems(raw_data):
+        for k, v in raw_data.items():
             if v is not None:
                 deserialize = get_deserializer(k)
                 data[k] = deserialize(v) if deserialize is not None else v
@@ -78,7 +74,7 @@ class Object(object):
 
     def serialize(self):
         return {k: serialize(v)
-                for k, v in six.iteritems(self.__dict__)
+                for k, v in self.__dict__.items()
                 if v is not None}
 
 
@@ -88,7 +84,7 @@ class Array(object):
         self._deserialize_element = get_deserializer(datatype)
 
     def deserialize(self, raw_data):
-        return list(six.moves.map(self._deserialize_element, (raw_data or ())))
+        return list(map(self._deserialize_element, (raw_data or ())))
 
     # for backwards compatibility
     __call__ = deserialize
@@ -99,7 +95,7 @@ class EnumMeta(type):
         params['values'] = {}
         new_class = super(EnumMeta, mcs).__new__(mcs, name, bases, params)
 
-        for k, v in six.iteritems(params):
+        for k, v in params.items():
             if isinstance(v, int):
                 new_class.values[v] = k
                 setattr(new_class, k, new_class(v))
@@ -107,8 +103,7 @@ class EnumMeta(type):
         return new_class
 
 
-@six.add_metaclass(EnumMeta)
-class Enum(object):
+class Enum(object, metaclass=EnumMeta):
     values = {}
 
     def __init__(self, value=None):
